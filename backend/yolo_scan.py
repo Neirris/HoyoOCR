@@ -10,6 +10,7 @@ def prepare_for_yolo(image):
         return cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
     return image
 
+
 def detect_with_yolo(
     image,
     model_path="abyss.pt",
@@ -19,15 +20,6 @@ def detect_with_yolo(
     white_background=True,
     missing_gap_threshold=1.5,
 ):
-    """
-    Детекция объектов YOLO с нормализацией размеров, устранением пересечений по X
-    и вставкой пропущенных объектов при больших разрывах (множество MISSING).
-    Возвращает:
-    - аннотированное изображение
-    - массив боксов в формате [x1, y1, x2, y2]
-    - массив классов
-    - массив скоров уверенности
-    """
     model = YOLO(model_path)
     color_image = prepare_for_yolo(image)
     results = model(color_image)

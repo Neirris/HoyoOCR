@@ -269,10 +269,7 @@ def adjust_image_properties(image, mode="adaptive", isLight=True):
 
 
 def rotate_image(image, angle):
-    """
-    Поворачивает изображение на заданный угол с автоматическим подбором размера холста
-    чтобы все содержимое оставалось в кадре без обрезки.
-    """
+    """Поворачивает изображение на заданный угол """
     (h, w) = image.shape[:2]
 
     radians = np.deg2rad(angle)
@@ -324,10 +321,7 @@ def compute_skew_fft(binary_image):
 
 
 def extract_and_align_symbols(original_image, boxes, padding=3, crop_margin=5):
-    """
-    Функция для создания нового изображения, где символы выровнены в ряд и центрированы,
-    а затем обрезка до границ символов с указанным отступом.
-    """
+    """Функция для выравнивания символов"""
     if len(original_image.shape) == 2:
         channels = 1
     else:
@@ -359,7 +353,6 @@ def extract_and_align_symbols(original_image, boxes, padding=3, crop_margin=5):
         ] = symbol_region
         current_x_position += (x2 - x1) + padding
 
-    # Create final image with same height as original but width to fit aligned symbols
     if channels == 1:
         final_image = (
             np.ones((original_image.shape[0], total_width), dtype=np.uint8) * 255
@@ -372,7 +365,6 @@ def extract_and_align_symbols(original_image, boxes, padding=3, crop_margin=5):
     vertical_center = (final_image.shape[0] - new_image.shape[0]) // 2
     horizontal_center = (final_image.shape[1] - new_image.shape[1]) // 2
 
-    # Make sure we don't go out of bounds
     vertical_end = min(vertical_center + new_image.shape[0], final_image.shape[0])
     horizontal_end = min(horizontal_center + new_image.shape[1], final_image.shape[1])
 
@@ -389,7 +381,7 @@ def extract_and_align_symbols(original_image, boxes, padding=3, crop_margin=5):
         gray = cv2.cvtColor(final_image, cv2.COLOR_BGR2GRAY)
 
     coords = cv2.findNonZero(255 - gray)
-    if coords is not None:  # Check if any non-white pixels were found
+    if coords is not None: 
         x, y, w, h = cv2.boundingRect(coords)
 
         x = max(0, x - crop_margin)
@@ -399,7 +391,7 @@ def extract_and_align_symbols(original_image, boxes, padding=3, crop_margin=5):
 
         cropped_final_image = final_image[y : y + h, x : x + w]
     else:
-        cropped_final_image = final_image  # Return unchanged if no content found
+        cropped_final_image = final_image  
 
     return cropped_final_image
 
@@ -428,13 +420,12 @@ def correct_box(image, box, padding=5):
     contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     if not contours:
-        return box  # Ничего не нашли, оставляем как есть
+        return box 
 
-    cnt = max(contours, key=cv2.contourArea)  # Самый большой контур
+    cnt = max(contours, key=cv2.contourArea)  
 
     x, y, w, h = cv2.boundingRect(cnt)
 
-    # Корректируем координаты, с небольшим запасом (padding)
     new_x1 = max(x1 + x - padding, 0)
     new_y1 = max(y1 + y - padding, 0)
     new_x2 = min(x1 + x + w + padding, image.shape[1])

@@ -4,8 +4,6 @@ from collections import defaultdict
 
 
 def run_tesseract_pipeline(image, pipeline_name, lang="abyss", min_confidence=70):
-    """Запускает Tesseract OCR и возвращает лучший результат для данного пайплайна"""
-
     psm_modes = {
         6: "Assume a single uniform block of text",
         7: "Treat the image as a single text line",
@@ -186,7 +184,6 @@ def compare_pipeline_results(results):
     # Сортируем результаты по оценке
     final_scores.sort(key=lambda x: x["score"], reverse=True)
 
-    # Возвращаем лучший результат
     if final_scores:
         best_result = final_scores[0]
 
