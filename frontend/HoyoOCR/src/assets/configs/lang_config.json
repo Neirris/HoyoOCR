@@ -1,0 +1,14 @@
+{
+    "games": {
+      "Genshin Impact": {
+        "path_icon": "@/assets/icons/GI_icon.png",
+        "languages": ["Abyss"],
+        "enabled": true
+      },
+      "Honkai: Star Rail": {
+        "path_icon": "@/assets/icons/HSR_icon.png",
+        "languages": ["Interstellar"],
+        "enabled": true
+      }
+    }
+  }
