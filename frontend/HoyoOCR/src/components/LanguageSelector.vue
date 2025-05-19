@@ -24,6 +24,7 @@ import { ref, computed, watch } from 'vue'
 import GI_icon from '@/assets/icons/GI_icon.png'
 import HSR_icon from '@/assets/icons/HSR_icon.png'
 import placeholderIcon from '@/assets/icons/placeholder-icon.png'
+import { useStore } from '@/stores/store'
 
 const props = defineProps({
   enabledGames: {
@@ -41,6 +42,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:game', 'update:language'])
+const store = useStore()
 
 const game = computed({
   get: () => props.game,
@@ -49,7 +51,11 @@ const game = computed({
 
 const language = computed({
   get: () => props.language,
-  set: (value) => emit('update:language', value),
+  set: (value) => {
+    emit('update:language', value)
+    store.language = value
+    console.log('[store] Выбран язык:', value)
+  },
 })
 
 const imageLoadError = ref(false)

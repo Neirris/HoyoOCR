@@ -2,12 +2,12 @@
     "games": {
       "Genshin Impact": {
         "icon": "",
-        "languages": ["Abyss"],
+        "languages": ["abyss"],
         "enabled": true
       },
       "Honkai: Star Rail": {
         "icon": "",
-        "languages": ["Interstellar"],
+        "languages": ["interstellar"],
         "enabled": false
       }
     }

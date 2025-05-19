@@ -46,10 +46,13 @@ import ImageDropZone from '@/components/ImageDropZone.vue'
 import TextPanel from '@/components/TextPanel.vue'
 import langConfig from '@/assets/configs/lang_config.json'
 
+import { useStore } from '@/stores/store'
+
+const store = useStore()
 const selectedGameName = ref('')
 const selectedLanguage = ref('')
 const selectedFile = ref(null)
-const translationText = ref('')
+const translationText = computed(() => store.translationResult) // <-- теперь через store
 
 const enabledGames = computed(() => {
   return Object.fromEntries(
@@ -96,7 +99,6 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  padding: 20px;
   background-color: #f5f5f5;
 }
 
@@ -135,6 +137,7 @@ onMounted(() => {
   background: none;
   cursor: pointer;
   font-weight: 500;
+  font-size: 16px;
   transition: all 0.2s;
 }
 

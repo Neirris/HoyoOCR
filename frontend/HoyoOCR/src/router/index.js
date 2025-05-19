@@ -9,11 +9,11 @@ const router = createRouter({
       name: 'home',
       component: TranslatorView,
     },
-    {
-      path: '/translate',
-      name: 'translate',
-      component: () => import('../views/TranslatorView.vue'),
-    },
+    // {
+    //   path: '/translate',
+    //   name: 'translate',
+    //   component: () => import('../views/TranslatorView.vue'),
+    // },
   ],
 })
 
