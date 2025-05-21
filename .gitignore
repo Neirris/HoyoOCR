@@ -1,0 +1,58 @@
+# Зависимости
+node_modules/
+
+# Логи
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Файлы среды выполнения
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Каталоги сборки
+build/
+dist/
+temp/
+
+# Директории и файлы, специфичные для редакторов и IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-workspace
+
+# Директории и файлы, специфичные для операционной системы
+.DS_Store
+Thumbs.db
+
+# Архивы, созданные при упаковке npm
+*.tgz
+
+# Файлы конфигурации
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Файлы секретов
+*.pem
+*.key
+
+# Временные файлы
+*.tmp
+*.temp
+
+### Python-специфичные исключения ###
+.venv/
+__pycache__/
+
+### Backend-специфичные исключения ###
+backend/test_images/
+train/datasets/
+train/tesstrain/
