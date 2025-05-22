@@ -10,7 +10,6 @@ from image_processing import (
 )
 import asyncio
 
-
 async def run_pipeline(image, pipeline_steps, pipeline_name):
     current_image = image.copy()
     intermediate_results = {}
@@ -20,48 +19,41 @@ async def run_pipeline(image, pipeline_steps, pipeline_name):
         args = step[1:] if len(step) > 1 else ()
 
         try:
-            if callable(func):
-                result = (
-                    await func(current_image, *args)
-                    if func.__name__
-                    in [
-                        "rotate_image",
-                        "compute_skew_fft",
-                        "extract_and_align_symbols",
-                        "resize_to_target_font_size",
-                    ]
-                    else func(current_image, *args)
-                )
+            result = await func(current_image, *args)
+            
+            if isinstance(result, tuple):
+                processed_image, step_name = result
+            else:
+                processed_image, _step_name = result, func.__name__
 
-                if isinstance(result, tuple):
-                    processed_image, step_name = result
-                else:
-                    processed_image, _step_name = result, func.__name__
+            if func.__name__ in ["normalize_image", "otsu_binarization"]:
+                intermediate_results[func.__name__] = processed_image
 
-                if func.__name__ in ["normalize_image", "otsu_binarization"]:
-                    intermediate_results[func.__name__] = processed_image
+            if func.__name__ == "apply_otsu_mask":
+                if (
+                    "normalize_image" in intermediate_results
+                    and "otsu_binarization" in intermediate_results
+                ):
+                    processed_image, _ = await ImageProcessor.apply_otsu_mask(
+                        intermediate_results["normalize_image"],
+                        intermediate_results["otsu_binarization"],
+                    )
 
-                if func.__name__ == "apply_otsu_mask":
-                    if (
-                        "normalize_image" in intermediate_results
-                        and "otsu_binarization" in intermediate_results
-                    ):
-                        processed_image, _ = ImageProcessor.apply_otsu_mask(
-                            intermediate_results["normalize_image"],
-                            intermediate_results["otsu_binarization"],
-                        )
-
-                current_image = processed_image
+            current_image = processed_image
 
         except Exception as e:
-            print(f"Error: {func.__name__}: {str(e)}")
+            print(f"Error in {func.__name__} for pipeline {pipeline_name}: {str(e)}")
             continue
+
+    if current_image is None or current_image.size == 0:
+        print(f"Warning: Pipeline {pipeline_name} produced an invalid image.")
+        return {"image": None}
 
     return {"image": current_image}
 
-
 async def async_ocr_scan(original_image, lang="abyss"):
-    if original_image is None:
+    if original_image is None or original_image.size == 0:
+        print("Error: Input image is invalid or empty.")
         return None
 
     async def process_pipeline(name, pipeline):
@@ -69,10 +61,21 @@ async def async_ocr_scan(original_image, lang="abyss"):
         result = await run_pipeline(original_image, pipeline, name)
         binary_image = result["image"]
 
+        if binary_image is None:
+            print(f"Warning: Pipeline {name} returned invalid image. Skipping.")
+            return {
+                "result": None,
+                "image": None,
+                "name": name,
+                "yolo_boxes": [],
+                "yolo_classes": [],
+                "yolo_scores": []
+            }
+
         skew_angle = await compute_skew_fft(binary_image)
         deskewed = await rotate_image(binary_image, -skew_angle)
 
-        yolo_image, boxes, classes, scores = await detect_with_yolo(deskewed, model_path=f'{lang}.pt')
+        yolo_image, boxes, classes, scores = await detect_with_yolo(deskewed, lang=lang)
 
         if len(boxes) > 0:
             new_image = await extract_and_align_symbols(deskewed, boxes)
@@ -107,7 +110,6 @@ async def async_ocr_scan(original_image, lang="abyss"):
 
     images = [out["image"] for out in valid_results]
     names = [out["name"] for out in valid_results]
-    results = [out["result"] for out in valid_results]
 
     final_result, _ = await compare_pipeline_results_async(images, names)
     

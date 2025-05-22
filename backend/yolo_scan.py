@@ -1,29 +1,32 @@
-# yolo_scan_async.py
 import cv2
 import numpy as np
 import asyncio
+import os
 from ultralytics import YOLO
 from image_processing import trim_box
 
-
 async def prepare_for_yolo(image):
-    """преобразование изображения для YOLO"""
     if len(image.shape) == 2:
         return await asyncio.to_thread(cv2.cvtColor, image, cv2.COLOR_GRAY2BGR)
     return image
 
-
 async def detect_with_yolo(
     image,
-    model_path="abyss.pt",
+    lang="abyss",
+    model_path=None,
     conf_threshold=0.75,
     size_tolerance=0.1,
     small_overlap_threshold=0.2,
     white_background=True,
     missing_gap_threshold=1.5,
 ):
-    """детекция символов с помощью YOLO"""
     try:
+        if model_path is None:
+            model_path = os.path.join("assets", "models", lang, f"{lang}.pt")
+        
+        if not os.path.exists(model_path):
+            raise FileNotFoundError(f"YOLO model file not found at {model_path}")
+
         model = YOLO(model_path)
         color_image = await prepare_for_yolo(image)
 

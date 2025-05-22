@@ -1,8 +1,8 @@
 import pytesseract
 import cv2
 import asyncio
+import os
 from collections import defaultdict
-
 
 async def run_tesseract_pipeline_async(image, pipeline_name, lang="abyss", min_confidence=70):
     psm_modes = {
@@ -19,11 +19,16 @@ async def run_tesseract_pipeline_async(image, pipeline_name, lang="abyss", min_c
     if len(image.shape) == 2:
         image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
+    tessdata_path = os.path.join("assets", "models", lang)
+    if not os.path.exists(os.path.join(tessdata_path, f"{lang}.traineddata")):
+        print(f"Error: Tesseract language file not found at {tessdata_path}/{lang}.traineddata")
+        return None
+
     text_stats = defaultdict(list)
 
     for oem_key in oem_modes:
         for psm_key in psm_modes:
-            config = f"--oem {oem_key} --psm {psm_key} -l {lang}"
+            config = f"--oem {oem_key} --psm {psm_key} -l {lang} --tessdata-dir {tessdata_path}"
             try:
                 data = await asyncio.to_thread(
                     pytesseract.image_to_data,
@@ -86,7 +91,7 @@ async def run_tesseract_pipeline_async(image, pipeline_name, lang="abyss", min_c
 
     if best_text:
         for stats in text_stats[best_text]:
-            config = f"--oem {stats['oem']} --psm {stats['psm']} -l {lang}"
+            config = f"--oem {stats['oem']} --psm {stats['psm']} -l {lang} --tessdata-dir {tessdata_path}"
             data = await asyncio.to_thread(
                 pytesseract.image_to_data,
                 image,
@@ -126,7 +131,6 @@ async def run_tesseract_pipeline_async(image, pipeline_name, lang="abyss", min_c
                 }
 
     return None
-
 
 async def compare_pipeline_results_async(images, pipeline_names, lang="abyss", min_confidence=70):
     tasks = [

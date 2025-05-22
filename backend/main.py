@@ -10,7 +10,7 @@ import traceback
 app = FastAPI()
 
 origins = [
-    "http://localhost:5173",  # Vue фронт
+    "http://localhost:5173",  # Vue
 ]
 
 app.add_middleware(
@@ -20,7 +20,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 @app.post("/translate")
 async def translate_image(file: UploadFile = File(...), source_lang: str = Query(...)):
@@ -69,17 +68,14 @@ async def translate_image(file: UploadFile = File(...), source_lang: str = Query
             }
         )
 
-
 @app.get("/test")
 async def test_func():
     print("test")
     return {"text": "", "confidence": 0, "source": ""}
 
-
 @app.get("/")
 async def root():
     return {"message": "OCR API is running"}
-
 
 if __name__ == "__main__":
     print("Server is running at http://localhost:8000")
