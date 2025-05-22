@@ -1,43 +1,13 @@
-import os
 import cv2
 import numpy as np
 import random
 import asyncio
-import aiofiles
 
 async def ensure_grayscale(image):
     """преобразование в оттенки серого"""
     if len(image.shape) == 3:
         return await asyncio.to_thread(cv2.cvtColor, image, cv2.COLOR_BGR2GRAY)
     return image
-
-
-async def set_image_dpi(image, dpi=300):
-    """установка DPI"""
-    original_is_grayscale = len(image.shape) == 2
-    image_to_save = (
-        image if not original_is_grayscale 
-        else await asyncio.to_thread(cv2.cvtColor, image, cv2.COLOR_GRAY2BGR)
-    )
-
-    async with aiofiles.tempfile.NamedTemporaryFile(suffix=".tif", delete=False) as tmp_file:
-        temp_path = tmp_file.name
-
-    try:
-        await asyncio.to_thread(
-            cv2.imwrite,
-            temp_path,
-            image_to_save,
-            [cv2.IMWRITE_TIFF_XDPI, dpi, cv2.IMWRITE_TIFF_YDPI, dpi],
-        )
-        result = await asyncio.to_thread(cv2.imread, temp_path)
-        if original_is_grayscale:
-            result = await ensure_grayscale(result)
-
-        return result, f"DPI {dpi}"
-
-    finally:
-        await asyncio.to_thread(os.unlink, temp_path)
 
 
 async def normalize_image(image):
