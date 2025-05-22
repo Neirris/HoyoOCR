@@ -6,6 +6,7 @@ import random
 import logging
 from tqdm import tqdm
 import concurrent.futures
+import subprocess
 import image_processing as ImageProcessor
 
 logging.basicConfig(
@@ -296,9 +297,6 @@ class DatasetGenerator:
         return [x_center, y_center, width, height]
 
     def resize_to_target_dimensions(self, image, boxes, mask):
-        """
-        Resize image, mask, and boxes to meet height constraints (40-80 pixels) and minimum width (25 pixels).
-        """
         image_np = np.array(image)
         mask_np = np.array(mask)
         current_height, current_width = image_np.shape[:2]
@@ -339,6 +337,29 @@ class DatasetGenerator:
 
         return resized_image_pil, scaled_boxes, resized_mask_pil
 
+    def generate_lstmf(self, img_path, base_name):
+        try:
+            output_path = os.path.join(self.args.tesseract_dir, base_name)
+            cmd = [
+                "tesseract",
+                img_path,
+                output_path,
+                "--psm",
+                "13",
+                "lstm.train"
+            ]
+            subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            logging.info(f"Generated .lstmf file for {base_name}")
+        except subprocess.CalledProcessError as e:
+            logging.error(f"Failed to generate .lstmf for {base_name}: {e.stderr}")
+        except Exception as e:
+            logging.error(f"Error generating .lstmf for {base_name}: {str(e)}")
+
     def save_data(self, image, text, boxes, base_name, is_val=False):
         trimmed_image, trimmed_mask, trimmed_boxes, _ = self.trim_transparent_pixels(
             image, image, boxes
@@ -376,6 +397,9 @@ class DatasetGenerator:
                 self.args.tesseract_dir,
                 trimmed_image.height,
             )
+
+        # Generate .lstmf file
+        self.generate_lstmf(img_path, base_name)
 
         img_folder = "val" if is_val else "train"
         label_folder = "val" if is_val else "train"
@@ -433,8 +457,9 @@ class DatasetGenerator:
                         cleaned_img, updated_boxes, updated_mask
                     )
                 )
+                variant_base_name = f"{base_name}_{suffix}"
                 self.save_data(
-                    resized_img, text, resized_boxes, f"{base_name}_{suffix}", is_val
+                    resized_img, text, resized_boxes, variant_base_name, is_val
                 )
 
         if len(text) == 1:
@@ -449,7 +474,6 @@ class DatasetGenerator:
                 if morph_func == ImageProcessor.add_text_glow:
                     morph_img, updated_mask, morph_name = morph_func(image_np, mask_np)
                     glow_size = int(morph_name.split("_k")[1])
-                    # Expand bounding boxes to include glow radius
                     expanded_boxes = [
                         (
                             max(0, x1 - glow_size),
@@ -495,11 +519,12 @@ class DatasetGenerator:
                                 cleaned_img, updated_boxes, updated_mask
                             )
                         )
+                        variant_base_name = f"{base_name}_{morph_name}_{suffix}"
                         self.save_data(
                             resized_img,
                             text,
                             resized_boxes,
-                            f"{base_name}_{morph_name}_{suffix}",
+                            variant_base_name,
                             is_val,
                         )
 
@@ -580,7 +605,6 @@ class DatasetGenerator:
                         "L"
                     )
 
-                    # Apply glow effect if transform_name indicates glow (optional, for consistency)
                     if "Glow_k" in transform_name:
                         glow_size = (
                             int(transform_name.split("_k")[1])
