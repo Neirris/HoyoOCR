@@ -15,11 +15,13 @@ class DatasetGenerator:
         self.args = args
         self.classes = ["text"]
         self.rotation_angles = [-90, -60, -30, 0, 30, 60, 90]
+        self.affine_angles = [-30, -15, 15, 30]
+        self.scale_x_values = [1.0] 
 
     def apply_effects(self, image, mask, mode="random"):
         if len(image.shape) == 4:  # RGBA
             image = cv2.cvtColor(image, cv2.COLOR_RGBA2BGR)
-        elif len(image.shape) == 2:  # Оттенки серого
+        elif len(image.shape) == 2:  # Grayscale
             image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
         
         if mode == "random":
@@ -161,7 +163,7 @@ class DatasetGenerator:
 
         return trimmed_image, trimmed_boxes, trimmed_mask
 
-    def check_mask_overlap(self, original_mask, processed_image, boxes, threshold=0.45):
+    def check_mask_overlap(self, original_mask, processed_image, boxes, threshold=0.30):
         original_mask_np = np.array(original_mask)
         processed_image_np = np.array(processed_image)
         
@@ -172,6 +174,8 @@ class DatasetGenerator:
         
         for box in boxes:
             x1, y1, x2, y2 = box
+            if x1 < 0 or y1 < 0 or x2 > original_mask_np.shape[1] or y2 > original_mask_np.shape[0]:
+                return False, processed_image, boxes, original_mask
             mask_roi = original_mask_np[y1:y2, x1:x2]
             processed_roi = processed_image_np[y1:y2, x1:x2]
             
@@ -226,15 +230,9 @@ class DatasetGenerator:
         for i, char in enumerate(text):
             char_bbox = bboxes[i]
             _w, h = widths[i], heights[i]
-            
-            if angle_mode == "curve":
-                pass
-            else:
-                y = (img_height - h) // 2 + 10
-            
+            y = (img_height - h) // 2 + 10
             draw.text((x, y), char, font=font, fill=0)
             mask_draw.text((x, y), char, font=font, fill=255)
-            
             box = (
                 x + char_bbox[0],
                 y + char_bbox[1],
@@ -242,12 +240,10 @@ class DatasetGenerator:
                 y + char_bbox[3] + extra_size
             )
             char_boxes.append(box)
-            
             bbox_all[0] = min(bbox_all[0], box[0])
             bbox_all[1] = min(bbox_all[1], box[1])
             bbox_all[2] = max(bbox_all[2], box[2])
             bbox_all[3] = max(bbox_all[3], box[3])
-            
             x += widths[i] + inter_char_space[i]
         
         canvas.putalpha(mask)
@@ -270,6 +266,50 @@ class DatasetGenerator:
         width = (x2 - x1) / img_width
         height = (y2 - y1) / img_height
         return [x_center, y_center, width, height]
+    
+    def resize_to_target_dimensions(self, image, boxes, mask):
+        """
+        Resize image, mask, and boxes to meet height constraints (40-80 pixels) and minimum width (25 pixels).
+        """
+        image_np = np.array(image)
+        mask_np = np.array(mask)
+        current_height, current_width = image_np.shape[:2]
+
+        if current_height < 40:
+            scale_factor = 40 / current_height
+        elif current_height > 80:
+            scale_factor = 80 / current_height
+        else:
+            scale_factor = 1.0
+
+        new_width = int(current_width * scale_factor)
+        if new_width < 25:
+            scale_factor = 25 / current_width
+            new_width = 25
+
+        new_height = int(current_height * scale_factor)
+
+        resized_image = cv2.resize(
+            image_np, (new_width, new_height), interpolation=cv2.INTER_AREA
+        )
+        resized_mask = cv2.resize(
+            mask_np, (new_width, new_height), interpolation=cv2.INTER_NEAREST
+        )
+
+        scaled_boxes = [
+            (
+                int(x1 * scale_factor) if x1 is not None else 0,
+                int(y1 * scale_factor) if y1 is not None else 0,
+                int(x2 * scale_factor) if x2 is not None else 0,
+                int(y2 * scale_factor) if y2 is not None else 0,
+            )
+            for x1, y1, x2, y2 in boxes
+        ]
+
+        resized_image_pil = Image.fromarray(resized_image).convert(image.mode)
+        resized_mask_pil = Image.fromarray(resized_mask).convert(mask.mode)
+
+        return resized_image_pil, scaled_boxes, resized_mask_pil
 
     def save_data(self, image, text, boxes, base_name, is_val=False):
         trimmed_image, trimmed_mask, trimmed_boxes, _ = self.trim_transparent_pixels(image, image, boxes)
@@ -307,7 +347,6 @@ class DatasetGenerator:
                     for box in yolo_boxes:
                         f.write(f"0 {' '.join(map(str, box))}\n")
 
-
     def _create_box_file(self, base_name, text, boxes, output_dir, image_height):
         box_path = os.path.join(output_dir, f"{base_name}.box")
         with open(box_path, "w", encoding="utf-8") as f:
@@ -332,7 +371,10 @@ class DatasetGenerator:
             bin_img_pil = Image.fromarray(bin_img)
             is_valid, cleaned_img, updated_boxes, updated_mask = self.check_mask_overlap(mask, bin_img_pil, boxes)
             if is_valid:
-                self.save_data(cleaned_img, text, updated_boxes, f"{base_name}_{suffix}", is_val)
+                resized_img, resized_boxes, resized_mask = self.resize_to_target_dimensions(
+                    cleaned_img, updated_boxes, updated_mask
+                )
+                self.save_data(resized_img, text, resized_boxes, f"{base_name}_{suffix}", is_val)
         
         if len(text) == 1:
             morph_functions = [
@@ -356,10 +398,13 @@ class DatasetGenerator:
                     bin_img_pil = Image.fromarray(bin_img)
                     is_valid, cleaned_img, updated_boxes, updated_mask = self.check_mask_overlap(resized_mask, bin_img_pil, resized_boxes)
                     if is_valid:
+                        resized_img, resized_boxes, resized_mask = self.resize_to_target_dimensions(
+                            cleaned_img, updated_boxes, updated_mask
+                        )
                         self.save_data(
-                            cleaned_img,
+                            resized_img,
                             text,
-                            updated_boxes,
+                            resized_boxes,
                             f"{base_name}_{morph_name}_{suffix}",
                             is_val
                         )
@@ -399,7 +444,6 @@ class DatasetGenerator:
             new_y1 = min(y_coords) - extra_size
             new_x2 = max(x_coords) + extra_size
             new_y2 = max(y_coords) + extra_size
-            
             expanded_box = (
                 max(0, new_x1 - x_min),
                 max(0, new_y1 - y_min),
@@ -423,6 +467,31 @@ class DatasetGenerator:
                 f"{char}_{counter}_{size}_{angle}",
                 is_val
             )
+        
+        if 0 in self.rotation_angles:
+            for angle in self.affine_angles:
+                for scale_x in self.scale_x_values:
+                    image_np = np.array(image)
+                    mask_np = np.array(mask)
+                    transformed_img, transformed_mask, transformed_boxes, transform_name = ImageProcessor.apply_affine_transform(
+                        image_np, mask_np, [box], angle, scale_x
+                    )
+                    transformed_img_pil = Image.fromarray(transformed_img).convert("RGB")
+                    transformed_mask_pil = Image.fromarray(transformed_mask).convert("L")
+                    
+                    scaled_img, scaled_boxes, scaled_mask = self.resize_image_and_boxes(
+                        transformed_img_pil, transformed_boxes, transformed_mask_pil, extra_size=extra_size
+                    )
+                    
+                    is_val = random.random() < self.args.val_split
+                    self.process_and_save(
+                        scaled_img,
+                        char,
+                        scaled_boxes,
+                        scaled_mask,
+                        f"{char}_{counter}_{size}_{transform_name}",
+                        is_val
+                    )
 
     def generate_text_line(self, line, size, mode, counter, pbar, extra_size=0):
         try:
@@ -466,12 +535,15 @@ class DatasetGenerator:
             
             pbar.update(1)
         except Exception as e:
-            logging.error(f"Ошибка при обработке строки '{line}' с размером {size}, режимом {mode}, счётчиком {counter}: {str(e)}")
+            logging.error(f"Error processing line '{line}' with size {size}, mode {mode}, counter {counter}: {str(e)}")
             raise
 
     def process_and_save(self, img, text, boxes, mask, base_name, is_val):
         processed_img, processed_mask, processed_boxes = self.apply_processing_pipeline(img, boxes, mask)
-        self.generate_variants(processed_img, text, processed_boxes, processed_mask, base_name, is_val)
+        resized_img, resized_boxes, resized_mask = self.resize_to_target_dimensions(
+            processed_img, processed_boxes, processed_mask
+        )
+        self.generate_variants(resized_img, text, resized_boxes, resized_mask, base_name, is_val)
 
     def generate_all(self):
         try:
@@ -480,7 +552,7 @@ class DatasetGenerator:
             
             total_images = len(lines) * len(self.args.font_sizes)
             
-            with tqdm(total=total_images, desc="Генерация датасета", ncols=100) as pbar:
+            with tqdm(total=total_images, desc="Generating dataset", ncols=100) as pbar:
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     futures = []
                     for counter, line in enumerate(lines):
@@ -499,5 +571,5 @@ class DatasetGenerator:
                             )
                     concurrent.futures.wait(futures)
         except Exception as e:
-            logging.error(f"Ошибка в generate_all: {str(e)}")
+            logging.error(f"Error in generate_all: {str(e)}")
             raise
