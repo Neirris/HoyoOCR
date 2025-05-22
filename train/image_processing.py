@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import random
 
+
 def ensure_grayscale(image):
     """Преобразование в оттенки серого"""
     if len(image.shape) == 3:
@@ -10,6 +11,7 @@ def ensure_grayscale(image):
         return cv2.cvtColor(image, cv2.COLOR_RGBA2GRAY)
     return image
 
+
 def normalize_image(image):
     """Нормализация изображения"""
     image = ensure_grayscale(image)
@@ -17,12 +19,14 @@ def normalize_image(image):
     normalized = cv2.normalize(image, norm_img, 0, 255, cv2.NORM_MINMAX)
     return normalized, "Normalization"
 
+
 def apply_clahe(image):
     """Повышение контрастности"""
     image = ensure_grayscale(image)
     clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
     enhanced = clahe.apply(image)
     return enhanced, "CLAHE_Contrast"
+
 
 def sharpen_image(image, method="unsharp", kernel_size=(5, 5), strength=1.0):
     """Повышение резкости"""
@@ -48,6 +52,7 @@ def sharpen_image(image, method="unsharp", kernel_size=(5, 5), strength=1.0):
         sharpened = cv2.filter2D(image, -1, kernel)
         return sharpened, "Sharpening"
 
+
 def denoise_bilateral(image):
     """Применение двустороннего сглаживания"""
     if len(image.shape) == 4:  # RGBA
@@ -57,11 +62,13 @@ def denoise_bilateral(image):
     denoised = cv2.bilateralFilter(image, 9, 75, 75)
     return denoised, "Bilateral_Denoising"
 
+
 def denoise_nlmeans(image):
     """Применение сглаживания методом нелокальных средних"""
     image = ensure_grayscale(image)
     denoised = cv2.fastNlMeansDenoising(image, None, 10, 7, 21)
     return denoised, "NL_Means_Denoising"
+
 
 def adaptive_binarization(image):
     """Адаптивная бинаризация"""
@@ -71,11 +78,13 @@ def adaptive_binarization(image):
     )
     return binary, "Adaptive_Binarization"
 
+
 def otsu_binarization(image):
     """Бинаризация по методу Оцу"""
     image = ensure_grayscale(image)
     _, binary = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     return binary, "Otsu_Binarization"
+
 
 def apply_otsu_mask(original_image, binary_image=None):
     """Применение маски Оцу"""
@@ -93,6 +102,7 @@ def apply_otsu_mask(original_image, binary_image=None):
         result = cv2.bitwise_and(original_image, binary_image)
     return result, "Otsu_Mask"
 
+
 def image_erosion(image, ksize=None):
     """Эрозия (сужение)"""
     if ksize is None:
@@ -100,6 +110,7 @@ def image_erosion(image, ksize=None):
     kernel = np.ones((ksize, ksize), np.uint8)
     processed_img = cv2.erode(image, kernel, iterations=1)
     return processed_img, f"Erosion_k{ksize}"
+
 
 def image_dilation(image, ksize=None):
     """Дилатация (расширение)"""
@@ -109,6 +120,7 @@ def image_dilation(image, ksize=None):
     processed_img = cv2.dilate(image, kernel, iterations=1)
     return processed_img, f"Dilation_k{ksize}"
 
+
 def image_closing(image):
     """Морфологическое закрытие (удаление мелких отверстий)"""
     kernel = np.ones((3, 3), np.uint8)
@@ -116,12 +128,14 @@ def image_closing(image):
     processed_img = cv2.dilate(processed_img, kernel, iterations=1)
     return processed_img, "Morphology_Closing"
 
+
 def image_opening(image):
     """Морфологическое открытие (удаление мелких объектов)"""
     kernel = np.ones((3, 3), np.uint8)
     processed_img = cv2.dilate(image, kernel, iterations=1)
     processed_img = cv2.erode(processed_img, kernel, iterations=1)
     return processed_img, "Morphology_Opening"
+
 
 def apply_gaussian_noise(image, mean=0, var=10):
     """Добавление гауссовского шума"""
@@ -133,6 +147,7 @@ def apply_gaussian_noise(image, mean=0, var=10):
     noisy = np.clip(noisy, 0, 255).astype(np.uint8)
     return noisy, "Gaussian_Noise"
 
+
 def apply_salt_pepper_noise(image, amount=0.005, salt_vs_pepper=0.5):
     """Добавление шума соли и перца"""
     if len(image.shape) == 4:  # RGBA
@@ -140,11 +155,16 @@ def apply_salt_pepper_noise(image, amount=0.005, salt_vs_pepper=0.5):
     noisy = np.copy(image)
     num_salt = int(np.ceil(amount * image.size * salt_vs_pepper))
     num_pepper = int(np.ceil(amount * image.size * (1.0 - salt_vs_pepper)))
-    coords_salt = [np.random.randint(0, max(1, i - 1), num_salt) for i in image.shape[:2]]
-    coords_pepper = [np.random.randint(0, max(1, i - 1), num_pepper) for i in image.shape[:2]]
+    coords_salt = [
+        np.random.randint(0, max(1, i - 1), num_salt) for i in image.shape[:2]
+    ]
+    coords_pepper = [
+        np.random.randint(0, max(1, i - 1), num_pepper) for i in image.shape[:2]
+    ]
     noisy[coords_salt[0], coords_salt[1]] = 255
     noisy[coords_pepper[0], coords_pepper[1]] = 0
     return noisy, "Salt_Pepper_Noise"
+
 
 def smooth_edges(
     img: np.ndarray,
@@ -174,6 +194,7 @@ def smooth_edges(
     smoothed_img = (img * mask).astype(np.uint8)
     return smoothed_img, "Smooth_Edges"
 
+
 def apply_random_blur(image):
     """Добавление случайного размытия"""
     if len(image.shape) == 4:  # RGBA
@@ -185,6 +206,7 @@ def apply_random_blur(image):
         blurred = cv2.medianBlur(image, 5)
         return blurred, "Median_Blur"
 
+
 def remove_binary_noise(binary_image, noise_level=3):
     """Удаление шумов с бинаризованного изображения"""
     inverted = cv2.bitwise_not(binary_image)
@@ -193,6 +215,7 @@ def remove_binary_noise(binary_image, noise_level=3):
     closed = cv2.morphologyEx(opened, cv2.MORPH_CLOSE, kernel, iterations=1)
     result = cv2.bitwise_not(closed)
     return result, "Noise_Removed"
+
 
 def adjust_image_properties(image, mode="adaptive", isLight=True):
     """Цветокоррекция изображения"""
@@ -223,6 +246,7 @@ def adjust_image_properties(image, mode="adaptive", isLight=True):
         image, _ = otsu_binarization(image)
     return image, "Adjusted_Properties"
 
+
 def add_text_glow(image, text_mask, glow_size=None):
     """Добавляет внешнее свечение к тексту на изображении по заданной маске"""
     if glow_size is None:
@@ -247,7 +271,8 @@ def add_text_glow(image, text_mask, glow_size=None):
     result[mask] = cv2.addWeighted(output_image[mask], 0.5, glow_layer[mask], 0.5, 0.0)
     text_mask_binary = text_mask > 0
     result[text_mask_binary] = image[text_mask_binary]
-    return result, f"Glow_k{glow_size}"
+    return result, glow_mask, f"Glow_k{glow_size}"
+
 
 def resize_to_target_font_size(image, mask, boxes, target_height=40):
     """Масштабирование до целевой высоты шрифта"""
@@ -274,6 +299,7 @@ def resize_to_target_font_size(image, mask, boxes, target_height=40):
     ]
     return resized_image, resized_mask, scaled_boxes
 
+
 def apply_affine_transform(image, mask, boxes, angle, scale_x=1.0):
     """Афинное преобразование (наклон и коррекция ширины)"""
     if len(image.shape) == 4:  # RGBA
@@ -281,38 +307,55 @@ def apply_affine_transform(image, mask, boxes, angle, scale_x=1.0):
     elif len(image.shape) == 2:  # Grayscale
         image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
     height, width = image.shape[:2]
-    
+
     rad = np.radians(abs(angle))
     new_width = int(width * abs(np.cos(rad)) + height * abs(np.sin(rad))) + 50
     new_height = int(width * abs(np.sin(rad)) + height * abs(np.cos(rad))) + 50
     pad_x = (new_width - width) // 2
     pad_y = (new_height - height) // 2
-    
-    padded_image = cv2.copyMakeBorder(image, pad_y, pad_y, pad_x, pad_x, cv2.BORDER_CONSTANT, value=255)
-    padded_mask = cv2.copyMakeBorder(mask, pad_y, pad_y, pad_x, pad_x, cv2.BORDER_CONSTANT, value=0)
-    
+
+    padded_image = cv2.copyMakeBorder(
+        image, pad_y, pad_y, pad_x, pad_x, cv2.BORDER_CONSTANT, value=255
+    )
+    padded_mask = cv2.copyMakeBorder(
+        mask, pad_y, pad_y, pad_x, pad_x, cv2.BORDER_CONSTANT, value=0
+    )
+
     new_center = (padded_image.shape[1] / 2, padded_image.shape[0] / 2)
-    updated_boxes = [(x1 + pad_x, y1 + pad_y, x2 + pad_x, y2 + pad_y) for x1, y1, x2, y2 in boxes]
-    
+    updated_boxes = [
+        (x1 + pad_x, y1 + pad_y, x2 + pad_x, y2 + pad_y) for x1, y1, x2, y2 in boxes
+    ]
+
     rot_matrix = cv2.getRotationMatrix2D(new_center, angle, 1.0)
     rot_matrix[0, 0] *= scale_x
     rot_matrix[1, 0] *= scale_x
-    
-    transformed_image = cv2.warpAffine(padded_image, rot_matrix, (new_width, new_height), borderValue=255)
-    transformed_mask = cv2.warpAffine(padded_mask, rot_matrix, (new_width, new_height), borderValue=0)
-    
+
+    transformed_image = cv2.warpAffine(
+        padded_image, rot_matrix, (new_width, new_height), borderValue=255
+    )
+    transformed_mask = cv2.warpAffine(
+        padded_mask, rot_matrix, (new_width, new_height), borderValue=0
+    )
+
     transformed_boxes = []
     for box in updated_boxes:
         x1, y1, x2, y2 = box
-        points = np.array([
-            [x1, y1], [x2, y1], [x2, y2], [x1, y2]
-        ], dtype=np.float32)
+        points = np.array([[x1, y1], [x2, y1], [x2, y2], [x1, y2]], dtype=np.float32)
         points = np.hstack([points, np.ones((4, 1))])
         transformed_points = points @ rot_matrix.T
         x_coords, y_coords = transformed_points[:, 0], transformed_points[:, 1]
-        transformed_boxes.append((
-            int(min(x_coords)), int(min(y_coords)),
-            int(max(x_coords)), int(max(y_coords))
-        ))
-    
-    return transformed_image, transformed_mask, transformed_boxes, f"Affine_angle{angle}_scalex{scale_x}"
+        transformed_boxes.append(
+            (
+                int(min(x_coords)),
+                int(min(y_coords)),
+                int(max(x_coords)),
+                int(max(y_coords)),
+            )
+        )
+
+    return (
+        transformed_image,
+        transformed_mask,
+        transformed_boxes,
+        f"Affine_angle{angle}_scalex{scale_x}",
+    )
