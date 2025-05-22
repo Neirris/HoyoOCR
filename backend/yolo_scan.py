@@ -3,7 +3,7 @@ import numpy as np
 import asyncio
 import os
 from ultralytics import YOLO
-from image_processing import trim_box
+from box_processing import trim_box
 
 async def prepare_for_yolo(image):
     if len(image.shape) == 2:
@@ -19,6 +19,7 @@ async def detect_with_yolo(
     small_overlap_threshold=0.2,
     white_background=True,
     missing_gap_threshold=1.5,
+    pipeline=""
 ):
     try:
         if model_path is None:
