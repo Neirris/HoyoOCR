@@ -1,0 +1,54 @@
+# Игнорируем системные и IDE файлы
+.git/
+.gitignore
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Игнорируем виртуальные окружения Python
+venv/
+env/
+.venv/
+*/venv/*
+*/env/*
+*/.venv/*
+
+# Игнорируем кэш Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Игнорируем node_modules и сборки фронтенда
+node_modules/
+dist/
+build/
+*.log
+.npm
+.yarn-integrity
+
+# Игнорируем временные файлы и дампы
+*.tmp
+*.bak
+*.dump
+*.DS_Store
+
+# Игнорируем документацию и тестовые данные
+docs/
+tests/
+test_data/
+*.md
+
+# Игнорируем конфиги разработчика
+.env
+*.env.local
+.env.development
+.env.test
+
+# Исключения
+!README.md
+!requirements.txt
+!package.json
+!package-lock.json

@@ -6,20 +6,21 @@ import cv2
 from OCR_scan import async_ocr_scan
 import uvicorn
 import traceback
+import os
 
 app = FastAPI()
 
-origins = [
-    "http://localhost:5173",  # Vue
-]
+cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
+
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.post("/translate")
 async def translate_image(file: UploadFile = File(...), source_lang: str = Query(...)):
@@ -29,7 +30,9 @@ async def translate_image(file: UploadFile = File(...), source_lang: str = Query
         image = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
 
         if image is None:
-            return JSONResponse(status_code=400, content={"detail": "Failed to decode image"})
+            return JSONResponse(
+                status_code=400, content={"detail": "Failed to decode image"}
+            )
 
         result = await async_ocr_scan(image, lang=source_lang)
 
@@ -41,7 +44,7 @@ async def translate_image(file: UploadFile = File(...), source_lang: str = Query
                 "boxes": result.get("boxes", []),
                 "yolo_boxes": result.get("yolo_boxes", []),
                 "yolo_classes": result.get("yolo_classes", []),
-                "yolo_scores": result.get("yolo_scores", [])
+                "yolo_scores": result.get("yolo_scores", []),
             }
 
         return {
@@ -51,7 +54,7 @@ async def translate_image(file: UploadFile = File(...), source_lang: str = Query
             "boxes": [],
             "yolo_boxes": [],
             "yolo_classes": [],
-            "yolo_scores": []
+            "yolo_scores": [],
         }
 
     except Exception as e:
@@ -64,19 +67,26 @@ async def translate_image(file: UploadFile = File(...), source_lang: str = Query
                 "boxes": [],
                 "yolo_boxes": [],
                 "yolo_classes": [],
-                "yolo_scores": []
-            }
+                "yolo_scores": [],
+            },
         )
+
 
 @app.get("/test")
 async def test_func():
     print("test")
     return {"text": "", "confidence": 0, "source": ""}
 
+
 @app.get("/")
 async def root():
     return {"message": "OCR API is running"}
 
+
 if __name__ == "__main__":
     print("Server is running at http://localhost:8000")
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+    )  # reload=True
