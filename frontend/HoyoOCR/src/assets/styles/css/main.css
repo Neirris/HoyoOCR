@@ -1,6 +1,18 @@
+@font-face {
+  font-family: 'GenshinFont';
+  src: url('../fonts/GenshinFont.ttf') format('truetype');
+  font-style: normal;
+}
+
 html,
-body {
+body,
+#app {
+  color: #2c3e50;
+  background-color: #060817;
+  font-family: 'GenshinFont', sans-serif;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
   margin: 0;
   padding: 0;
-  overflow: hidden; /* Это предотвратит появление скролла на уровне страницы */
 }

@@ -34,7 +34,12 @@
         />
       </div>
 
-      <TextPanel :text="translationText" @copy="copyTranslation" @download="downloadImage" />
+      <TextPanel
+        :text="translationText"
+        @copy="copyTranslation"
+        @download="downloadImage"
+        @delete="handleDeleteImage"
+      />
     </div>
   </div>
 </template>
@@ -52,7 +57,7 @@ const store = useStore()
 const selectedGameName = ref('')
 const selectedLanguage = ref('')
 const selectedFile = ref(null)
-const translationText = computed(() => store.translationResult) // <-- теперь через store
+const translationText = computed(() => store.translationResult)
 
 const enabledGames = computed(() => {
   return Object.fromEntries(
@@ -80,6 +85,12 @@ const copyTranslation = () => {
     .catch((err) => console.error('Ошибка копирования:', err))
 }
 
+const handleDeleteImage = () => {
+  selectedFile.value = null
+  store.imageFile = null
+  store.resetDetectionData()
+}
+
 const viewMode = ref('translated')
 const handleImageError = (error) => {
   console.error('Ошибка обработки изображения:', error)
@@ -99,7 +110,7 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-color: #f5f5f5;
+  background-color: #060817;
 }
 
 .main-panel {
@@ -107,10 +118,11 @@ onMounted(() => {
   width: 90%;
   max-width: 1200px;
   height: 70vh;
+  border: 4px solid #4f5565;
   border-radius: 15px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  background-color: white;
+  background-color: #3d4557;
 }
 
 .left-container {
@@ -118,37 +130,38 @@ onMounted(() => {
   padding: 25px;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #eaeaea;
+  border-right: 4px solid #4f5565;
 }
 
 .view-switcher {
   display: flex;
   align-items: center;
   margin-bottom: 15px;
-  background: #f5f5f5;
-  border-radius: 8px;
+  background: #323a47;
+  border-radius: 30px;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .view-button {
   flex: 1;
   padding: 10px;
-  border: none;
   background: none;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: bold;
   font-size: 16px;
-  transition: all 0.2s;
+  color: #e8f0fe;
+  border: none;
+  border: 3px solid transparent;
+  box-sizing: border-box;
+  line-height: 1;
+  font-family: 'GenshinFont';
 }
 
 .view-button.active {
-  background: #4a90e2;
-  color: white;
-}
-
-.divider {
-  width: 1px;
-  height: 20px;
-  background: #ddd;
+  background: #3e4557;
+  color: #baac97;
+  border-radius: 30px;
+  border: 3px solid #baac97;
 }
 </style>

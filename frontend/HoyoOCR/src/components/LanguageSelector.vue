@@ -102,10 +102,11 @@ watch(game, (newVal) => {
 }
 
 .game-icon {
-  width: 35px;
-  height: 35px;
-  object-fit: contain;
+  width: 45px;
+  height: 45px;
+  object-fit: cover;
   border-radius: 50%;
+  box-sizing: border-box; /* Чтобы бордер не увеличивал размер */
 }
 
 select {
@@ -113,8 +114,9 @@ select {
   padding: 12px;
   border: 1px solid #ddd;
   border-radius: 8px;
+
   font-size: 16px;
-  background-color: #f9f9f9;
+  background-color: #e8f0fe;
   cursor: pointer;
 }
 

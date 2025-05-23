@@ -3,6 +3,9 @@
     <div class="panel-header">
       <button class="download-button" @click="handleDownload" v-if="text">Скачать</button>
       <button class="copy-button" @click="handleCopy" v-if="text">Копировать</button>
+      <button class="delete-button" @click="handleDelete" v-if="text">
+        <img src="@/assets/icons/CircleErrorRed.png" alt="Удалить" />
+      </button>
     </div>
 
     <div class="translation-result" contenteditable="false">
@@ -23,22 +26,26 @@ defineProps({
   },
 })
 
-const emit = defineEmits(['copy', 'download'])
+const emit = defineEmits(['copy', 'download', 'delete'])
 
 const handleCopy = () => {
   emit('copy')
-  toast.success('Cкопировано в буфер обмена!', {
-    position: 'top-right',
-    autoClose: 3000,
+  toast.info('Cкопировано в буфер обмена!', {
+    position: 'top-center',
+    autoClose: 1000,
   })
 }
 
 const handleDownload = () => {
   emit('download')
-  toast.success('Изображение скачано!', {
-    position: 'top-left',
-    autoClose: 3000,
+  toast.info('Изображение скачано!', {
+    position: 'top-center',
+    autoClose: 1000,
   })
+}
+
+const handleDelete = () => {
+  emit('delete')
 }
 </script>
 
@@ -64,34 +71,50 @@ const handleDownload = () => {
   padding: 6px 14px;
   font-size: 16px;
   height: 36px;
-  background-color: #4caf50;
-  color: white;
+  background-color: #e8f0fe;
+  color: #060817;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.3s;
+  font-family: 'GenshinFont';
 }
 
 .copy-button:hover,
 .download-button:hover {
-  background-color: #3e8e41;
+  background-color: #3a7bc8;
+}
+
+.delete-button {
+  width: 36px;
+  height: 36px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-button img {
+  width: 24px;
+  height: 24px;
 }
 
 .translation-result {
   flex: 1;
   padding: 20px;
-  border: 1px solid #eaeaea;
   border-radius: 8px;
   overflow-y: auto;
-  background-color: #f9f9f9;
+  background-color: #323a47;
   line-height: 1.6;
   box-sizing: border-box;
-  color: black;
+  color: #e8f0fe;
   font-size: 20px;
 }
 
 .placeholder {
-  /* color: #aaa; */
   color: black;
   font-style: italic;
   text-align: center;
