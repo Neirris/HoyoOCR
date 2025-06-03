@@ -52,7 +52,6 @@ async def async_ocr_scan(original_image, lang="abyss"):
         return None
 
     async def process_pipeline(image, pipeline, name):
-        """Асинхронная обработка одного пайплайна с сохранением YOLO боксов"""
         result = await run_pipeline(image, pipeline, name)
         binary_image = result["image"]
 

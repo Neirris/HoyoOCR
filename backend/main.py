@@ -72,19 +72,7 @@ async def translate_image(file: UploadFile = File(...), source_lang: str = Query
         )
 
 
-@app.get("/test")
-async def test_func():
-    print("test")
-    return {"text": "", "confidence": 0, "source": ""}
-
-
-@app.get("/")
-async def root():
-    return {"message": "OCR API is running"}
-
-
 if __name__ == "__main__":
-    print("Server is running at http://localhost:8000")
     uvicorn.run(
         "main:app",
         host="0.0.0.0",

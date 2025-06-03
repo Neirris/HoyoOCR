@@ -4,14 +4,14 @@ import random
 import asyncio
 
 async def ensure_grayscale(image):
-    """преобразование в оттенки серого"""
+    """Преобразование в оттенки серого"""
     if len(image.shape) == 3:
         return await asyncio.to_thread(cv2.cvtColor, image, cv2.COLOR_BGR2GRAY)
     return image
 
 
 async def normalize_image(image):
-    """нормализация изображения"""
+    """Нормализация изображения"""
     image = await ensure_grayscale(image)
     norm_img = np.zeros((image.shape[0], image.shape[1]))
     normalized = await asyncio.to_thread(
@@ -20,7 +20,7 @@ async def normalize_image(image):
     return normalized, "Normalization"
 
 async def apply_clahe(image):
-    """повышение контрастности"""
+    """Повышение контрастности"""
     image = await ensure_grayscale(image)
     clahe = await asyncio.to_thread(
         cv2.createCLAHE, clipLimit=3.0, tileGridSize=(8, 8)
@@ -29,7 +29,7 @@ async def apply_clahe(image):
     return enhanced, "CLAHE_Contrast"
 
 async def sharpen_image(image, method="unsharp", kernel_size=(5, 5), strength=1.0):
-    """повышение резкости"""
+    """Повышение резкости"""
     if method == "unsharp":
         blurred = await asyncio.to_thread(
             cv2.GaussianBlur, image, kernel_size, 0
@@ -64,14 +64,14 @@ async def sharpen_image(image, method="unsharp", kernel_size=(5, 5), strength=1.
 
 
 async def denoise_bilateral(image):
-    """сглаживание"""
+    """Сглаживание"""
     denoised = await asyncio.to_thread(
         cv2.bilateralFilter, image, 9, 75, 75
     )
     return denoised, "Bilateral_Denoising"
 
 async def denoise_nlmeans(image):
-    """удаление шумов"""
+    """Удаление шумов"""
     image = await ensure_grayscale(image)
     denoised = await asyncio.to_thread(
         cv2.fastNlMeansDenoising, image, None, 10, 7, 21
@@ -82,7 +82,7 @@ async def denoise_nlmeans(image):
 
 
 async def adaptive_binarization(image):
-    """адаптивная бинаризация"""
+    """Адаптивная бинаризация"""
     image = await ensure_grayscale(image)
     binary = await asyncio.to_thread(
         cv2.adaptiveThreshold,
@@ -93,7 +93,7 @@ async def adaptive_binarization(image):
 
 
 async def otsu_binarization(image):
-    """бинаризация по методу Оцу"""
+    """Бинаризация по методу Оцу"""
     image = await ensure_grayscale(image)
     _, binary = await asyncio.to_thread(
         cv2.threshold, image, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU
@@ -103,7 +103,7 @@ async def otsu_binarization(image):
 
 
 async def apply_otsu_mask(original_image, binary_image=None):
-    """применение маски Оцу"""
+    """Применение маски Оцу"""
     if binary_image is None:
         gray = await ensure_grayscale(original_image)
         _, binary_image = await asyncio.to_thread(
@@ -127,7 +127,7 @@ async def apply_otsu_mask(original_image, binary_image=None):
 
 
 async def image_erosion(image, ksize=None):
-    """эрозия"""
+    """Эрозия"""
     if ksize is None:
         ksize = random.randint(1, 4)
     kernel = np.ones((ksize, ksize), np.uint8)
@@ -139,7 +139,7 @@ async def image_erosion(image, ksize=None):
 
 
 async def image_dilation(image, ksize=None):
-    """дилатация"""
+    """Дилатация"""
     if ksize is None:
         ksize = random.randint(1, 4)
     kernel = np.ones((ksize, ksize), np.uint8)
@@ -151,7 +151,7 @@ async def image_dilation(image, ksize=None):
 
 
 async def image_closing(image):
-    """морфологическое закрытие"""
+    """Морфологическое закрытие"""
     kernel = np.ones((3, 3), np.uint8)
     processed_img = await asyncio.to_thread(
         cv2.erode, image, kernel, iterations=1
@@ -164,7 +164,7 @@ async def image_closing(image):
 
 
 async def image_opening(image):
-    """морфологическое открытие"""
+    """Морфологическое открытие"""
     kernel = np.ones((3, 3), np.uint8)
     processed_img = await asyncio.to_thread(
         cv2.dilate, image, kernel, iterations=1
@@ -177,7 +177,7 @@ async def image_opening(image):
 
 
 async def apply_gaussian_noise(image, mean=0, var=10):
-    """добавление гауссовского шума"""
+    """Добавление гауссовского шума"""
     sigma = var**0.5
     gaussian = np.random.normal(mean, sigma, image.shape).astype(np.float32)
     noisy = await asyncio.to_thread(
@@ -189,7 +189,7 @@ async def apply_gaussian_noise(image, mean=0, var=10):
 
 
 async def apply_salt_pepper_noise(image, amount=0.005, salt_vs_pepper=0.5):
-    """добавление шума соли и перца"""
+    """Добавление шума соли и перца"""
     noisy = np.copy(image)
     num_salt = np.ceil(amount * image.size * salt_vs_pepper).astype(int)
     num_pepper = np.ceil(amount * image.size * (1.0 - salt_vs_pepper)).astype(int)
@@ -212,7 +212,7 @@ async def smooth_edges(
     use_adaptive_threshold: bool = False,
     invert_mask: bool = False,
 ) -> np.ndarray:
-    """сглаживание краёв"""
+    """Сглаживание краёв"""
     image = await ensure_grayscale(img)
     blurred = await asyncio.to_thread(
         cv2.GaussianBlur, image, (blur_kernel_size, blur_kernel_size), 0
@@ -246,7 +246,7 @@ async def smooth_edges(
 
 
 async def apply_random_blur(image):
-    """добавление случайного размытия"""
+    """Добавление случайного размытия"""
     if random.random() < 0.5:
         blurred = await asyncio.to_thread(
             cv2.GaussianBlur, image, (5, 5), 0
@@ -261,7 +261,7 @@ async def apply_random_blur(image):
 
 
 async def remove_binary_noise(binary_image, noise_level=3):
-    """удаление шумов с бинаризованного изображения"""
+    """Удаление шумов с бинаризованного изображения"""
     inverted = await asyncio.to_thread(cv2.bitwise_not, binary_image)
     kernel = np.ones((noise_level, noise_level), np.uint8)
     opened = await asyncio.to_thread(
@@ -276,8 +276,7 @@ async def remove_binary_noise(binary_image, noise_level=3):
 
 
 async def adjust_image_properties(image, mode="adaptive", isLight=True):
-    """цветокоррекция изображения"""
-    # Ensure the image is in BGR format (3 channels)
+    """Цветокоррекция изображения"""
     if len(image.shape) == 2:
         image = await asyncio.to_thread(cv2.cvtColor, image, cv2.COLOR_GRAY2BGR)
 
@@ -310,7 +309,7 @@ async def adjust_image_properties(image, mode="adaptive", isLight=True):
 
 
 async def resize_to_target_font_size(image, target_height=40):
-    """изменение размера до целевой высоты шрифта"""
+    """Изменение размера до целевой высоты шрифта"""
     current_height = image.shape[0]
     scale_factor = target_height / current_height
     new_width = int(image.shape[1] * scale_factor)

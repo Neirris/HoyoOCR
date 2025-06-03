@@ -101,7 +101,7 @@ async def correct_box(image, box, padding=5):
     return (new_x1, new_y1, new_x2, new_y2)
 
 async def trim_box(image, box, white_background=True):
-    """Асинхронный тримминг изображения внутри рамки"""
+    """Тримминг изображения внутри рамки"""
     x1, y1, x2, y2 = box
 
     height, width = image.shape[:2]
