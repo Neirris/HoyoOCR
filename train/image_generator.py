@@ -398,7 +398,6 @@ class DatasetGenerator:
                 trimmed_image.height,
             )
 
-        # Generate .lstmf file
         self.generate_lstmf(img_path, base_name)
 
         img_folder = "val" if is_val else "train"
